@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Presensi - MAS MIFTAHUL ULUM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #94a3b8 75%, #e2e8f0 100%); background-attachment: fixed; }
+        .glass-header { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(25px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border-radius: 1.5rem; }
+        .form-input { width: 100%; padding: 0.75rem 1rem; border: 2px solid #cbd5e1; border-radius: 1rem; font-size: 0.875rem; font-weight: 600; }
+        .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .nav-active { @apply px-5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-blue-600 to-slate-500 rounded-xl shadow-md transition-all; }
+        .nav-inactive { @apply px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-white/60 rounded-xl transition-all; }
+        @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <div class="flex-grow flex flex-col pt-4">
+        <header class="glass-header sticky top-4 z-50 mx-4 sm:mx-8 rounded-3xl mb-6 p-4">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="text-center sm:text-left flex-1">
+                    <h1 class="font-black text-xl lg:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-500">PRESENSI KBM DIGITAL</h1>
+                </div>
+                <nav class="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl border overflow-x-auto whitespace-nowrap">
+                    <button onclick="switchTab('scan')" id="tab-scan" class="nav-active">Scanner KBM</button>
+                    <button onclick="switchTab('students')" id="tab-students" class="nav-active bg-none bg-transparent text-slate-600 shadow-none">Data Siswa</button>
+                    <!-- Tautan ke file rekap.html -->
+                    <a href="rekap.html" class="nav-inactive block">Rekap Log</a>
+                    <a href="rekap.html?tab=teachers" class="nav-inactive block">Daftar Guru</a>
+                    <button onclick="logout()" class="nav-inactive text-rose-500 font-bold block">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="w-full max-w-7xl mx-auto px-4 pb-8 flex-grow">
+            <!-- VIEW SCAN -->
+            <div id="view-scan" class="space-y-6 block">
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-black text-slate-800 uppercase mb-4">Konfigurasi Sesi</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <select id="select-subject" class="form-input"><option value="Matematika">Matematika</option><option value="Fisika">Fisika</option><option value="Informatika">Informatika</option></select>
+                        <select id="select-class" class="form-input"><option value="X - A">X - A</option><option value="XII - A">XII - A</option></select>
+                        <select id="select-jam" class="form-input"><option value="1-2">1-2</option><option value="3-4">3-4</option></select>
+                        <div>
+                            <button id="btn-start" onclick="startSession()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl uppercase">Mulai Sesi</button>
+                            <button id="btn-stop" onclick="stopSession()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl uppercase hidden">Hentikan Sesi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="scanner-section" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 glass-card p-4">
+                        <select id="camera-select" onchange="switchCamera(this.value)" class="form-input text-xs mb-3 hidden"></select>
+                        <div id="reader" class="w-full aspect-square bg-slate-900 rounded-xl flex items-center justify-center text-white">Memuat...</div>
+                    </div>
+                    <div class="lg:col-span-8 glass-card p-6">
+                        <div class="flex justify-between border-b pb-3 mb-4">
+                            <h3 class="font-bold text-slate-800">Log Aktivitas</h3>
+                            <span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-xl text-xs font-bold">Total: <span id="count-session">0</span></span>
+                        </div>
+                        <div id="scan-alert" class="hidden mb-4 p-3 rounded-xl text-sm font-bold text-center"></div>
+                        <div class="overflow-x-auto max-h-[300px]">
+                            <table class="min-w-full text-left text-xs font-semibold">
+                                <thead class="bg-slate-800 text-white">
+                                    <tr><th class="px-4 py-2">Waktu</th><th class="px-4 py-2">NIS</th><th class="px-4 py-2">Nama</th><th class="px-4 py-2">Status</th></tr>
+                                </thead>
+                                <tbody id="session-log-body" class="divide-y divide-slate-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW STUDENTS -->
+            <div id="view-students" class="hidden space-y-6">
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-black text-slate-800 uppercase mb-4">Tambah Siswa</h2>
+                    <form onsubmit="addStudent(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="stu-nis" placeholder="NIS" required class="form-input">
+                        <input type="text" id="stu-name" placeholder="Nama Lengkap" required class="form-input">
+                        <select id="stu-class" required class="form-input"><option value="X - A">X - A</option><option value="XII - A">XII - A</option></select>
+                        <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-xl uppercase">Simpan</button>
+                    </form>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="flex justify-between mb-4">
+                        <h2 class="text-lg font-black text-slate-800 uppercase">Database & Kartu QR</h2>
+                        <button onclick="printQRCodes()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">Cetak QR</button>
+                    </div>
+                    <div id="print-area" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        if(!sessionStorage.getItem('auth_token')) window.location.href = 'index.html';
+        
+        let html5QrCode = null; let isProcessingScan = false;
+        let currentSubject="", currentClass="", currentJam="";
+        let isSessionActive = false; let sessionScans = [];
+        let students = JSON.parse(localStorage.getItem('db_students') || '[]');
+        let attendanceHistory = JSON.parse(localStorage.getItem('db_history') || '[]');
+
+        function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+
+        // --- Tab Logic ---
+        function switchTab(tab) {
+            // URL parameter handler
+            if (tab === 'students') {
+                document.getElementById('view-scan').classList.add('hidden');
+                document.getElementById('view-students').classList.remove('hidden');
+                document.getElementById('tab-scan').className = 'nav-inactive';
+                document.getElementById('tab-students').className = 'nav-active';
+                renderStudents();
+            } else {
+                document.getElementById('view-students').classList.add('hidden');
+                document.getElementById('view-scan').classList.remove('hidden');
+                document.getElementById('tab-students').className = 'nav-inactive';
+                document.getElementById('tab-scan').className = 'nav-active';
+            }
+        }
+
+        // On Load Check URL Parameter (jika diarahkan dari halaman rekap)
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('tab') === 'students') switchTab('students');
+
+        // --- Scanner Logic ---
+        function startSession() {
+            currentSubject = document.getElementById('select-subject').value;
+            currentClass = document.getElementById('select-class').value;
+            currentJam = document.getElementById('select-jam').value;
+            isSessionActive = true; sessionScans = []; updateSessionUI();
+            
+            document.getElementById('btn-start').classList.add('hidden');
+            document.getElementById('btn-stop').classList.remove('hidden');
+            document.getElementById('scanner-section').classList.remove('hidden');
+
+            document.getElementById('reader').innerHTML = "Memuat kamera...";
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .then(populateCameraDropdown).catch(() => {
+                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess, onScanFailure)
+                .then(populateCameraDropdown).catch(() => alert("Kamera tidak diizinkan atau tidak ditemukan."));
+            });
+        }
+
+        // KODE PELENGKAP KAMERA & DROPDOWN
+        function populateCameraDropdown() {
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length > 1) {
+                    const selectEl = document.getElementById('camera-select');
+                    selectEl.innerHTML = "";
+                    devices.forEach((dev, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = dev.id;
+                        opt.text = dev.label || `Kamera ${idx + 1}`;
+                        selectEl.appendChild(opt);
+                    });
+                    selectEl.classList.remove('hidden');
+                }
+            });
+        }
+
+        function switchCamera(cameraId) {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    const config = { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 };
+                    html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
+                });
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            if (isProcessingScan) return;
+            isProcessingScan = true;
+
+            const nis = decodedText.trim();
+            const student = students.find(s => String(s.nis) === nis);
+
+            if (!student) {
+                showAlert(`NIS ${nis} tidak ditemukan!`, 'error');
+                setTimeout(() => isProcessingScan = false, 2000);
+                return;
+            }
+            if (student.className !== currentClass) {
+                showAlert(`${student.name} bukan kelas ${currentClass}!`, 'error');
+                setTimeout(() => isProcessingScan = false, 2000);
+                return;
+            }
+            if (sessionScans.some(s => s.nis === nis)) {
+                showAlert(`${student.name} sudah absen!`, 'warning');
+                setTimeout(() => isProcessingScan = false, 2000);
+                return;
+            }
+
+            const now = new Date();
+            const logEntry = {
+                timestamp: now.toISOString(),
+                timeDisplay: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                nis: student.nis, name: student.name, className: currentClass, subject: currentSubject, jam: currentJam, status: 'Hadir'
+            };
+
+            sessionScans.unshift(logEntry);
+            attendanceHistory.unshift(logEntry);
+            localStorage.setItem('db_history', JSON.stringify(attendanceHistory));
+            updateSessionUI();
+            
+            showAlert(`Presensi Berhasil: ${student.name}`, 'success');
+            setTimeout(() => isProcessingScan = false, 1500);
+        }
+
+        function onScanFailure(error) {}
+
+        function showAlert(msg, type) {
+            const box = document.getElementById('scan-alert');
+            box.classList.remove('hidden');
+            box.innerHTML = msg;
+            box.className = `mt-4 p-3 rounded-xl text-sm font-bold text-center block ${type === 'success' ? 'bg-emerald-100 text-emerald-800' : type === 'error' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
+            setTimeout(() => { if(isSessionActive) box.classList.add('hidden'); }, 3000);
+        }
+
+        function stopSession() {
+            if (html5QrCode) { html5QrCode.stop().then(()=>html5QrCode.clear()); }
+            isSessionActive = false;
+            document.getElementById('btn-start').classList.remove('hidden');
+            document.getElementById('btn-stop').classList.add('hidden');
+            document.getElementById('scanner-section').classList.add('hidden');
+        }
+
+        function updateSessionUI() {
+            document.getElementById('count-session').innerText = sessionScans.length;
+            const tbody = document.getElementById('session-log-body');
+            tbody.innerHTML = sessionScans.map(s => `<tr><td class="px-4 py-2">${s.timeDisplay}</td><td class="px-4 py-2">${s.nis}</td><td class="px-4 py-2">${s.name}</td><td class="px-4 py-2 text-emerald-600 font-bold">${s.status}</td></tr>`).join('');
+            if(sessionScans.length === 0) tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">Belum ada absen...</td></tr>`;
+        }
+
+        // --- Data Siswa Logic ---
+        function addStudent(e) {
+            e.preventDefault();
+            const nis = document.getElementById('stu-nis').value;
+            const name = document.getElementById('stu-name').value;
+            const cls = document.getElementById('stu-class').value;
+            if (students.some(s => s.nis === nis)) return alert('NIS sudah ada!');
+            students.push({ nis, name, className: cls });
+            localStorage.setItem('db_students', JSON.stringify(students));
+            e.target.reset(); renderStudents(); alert('Siswa ditambahkan!');
+        }
+
+        function renderStudents() {
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = students.map(s => `
+                <div class="border p-3 rounded-xl flex flex-col items-center text-center shadow-sm w-32 bg-white">
+                    <span class="text-[10px] font-bold mb-1 truncate w-full">${s.name}</span>
+                    <span class="text-[9px] text-slate-500 mb-2">${s.className}</span>
+                    <div id="qr-${s.nis}" class="mb-1"></div>
+                    <span class="text-[9px] font-mono mt-1">${s.nis}</span>
+                </div>
+            `).join('');
+
+            setTimeout(() => {
+                students.forEach(s => {
+                    const el = document.getElementById(`qr-${s.nis}`);
+                    if (el) { el.innerHTML = ""; new QRCode(el, { text: s.nis, width: 80, height: 80 }); }
+                });
+            }, 100);
+        }
+
+        function printQRCodes() { window.print(); }
+    </script>
+</body>
+</html>
