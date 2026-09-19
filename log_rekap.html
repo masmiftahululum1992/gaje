@@ -1,0 +1,104 @@
+<!-- log_rekap.html -->
+<div class="glass-card p-4 md:p-8">
+                    
+    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 border-b border-slate-200/60 pb-5 gap-4">
+        <div>
+            <h2 class="text-base md:text-xl font-black text-slate-800 uppercase tracking-tight">Master Log Presensi</h2>
+            <div class="flex items-center gap-2 mt-3 bg-slate-50/80 p-2 rounded-xl border border-slate-200 shadow-inner w-max max-w-full overflow-hidden">
+                <label class="text-[10px] md:text-[11px] font-bold text-slate-500 px-2 uppercase tracking-wide whitespace-nowrap">Sumber Data:</label>
+                <select id="data-source-mode" onchange="changeDataSource()" class="form-input text-xs w-auto py-1.5 px-2 md:px-3 border-slate-300 bg-white">
+                    <option value="local">Mode Offline (Lokal)</option>
+                    <option value="realtime">Mode Realtime (Spreadsheet)</option>
+                </select>
+                <span id="data-source-status" class="text-[9px] md:text-[10px] font-bold px-2 py-1 rounded bg-slate-200 text-slate-600 whitespace-nowrap">Lokal</span>
+            </div>
+        </div>
+        
+        <div class="flex flex-col lg:flex-row gap-4 w-full xl:w-auto justify-end items-center">
+            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 w-full lg:w-auto">
+                <input type="date" id="filter-date" onchange="renderHistory()" class="form-input py-2 text-xs">
+                <input type="month" id="filter-month" onchange="renderHistory()" class="form-input py-2 text-xs">
+                <input type="text" id="filter-name" onkeyup="renderHistory()" placeholder="Cari Nama..." class="form-input py-2 text-xs">
+                <select id="filter-class" onchange="renderHistory()" class="form-input py-2 text-xs">
+                    <option value="">Semua Kelas</option>
+                    <option value="X - A">X - A</option><option value="X - B">X - B</option>
+                    <option value="XI - A">XI - A</option><option value="XII - A">XII - A</option><option value="XII - B">XII - B</option>
+                </select>
+                <select id="filter-subject" onchange="renderHistory()" class="form-input py-2 text-xs">
+                    <option value="">Semua Mapel</option>
+                    <option value="Akidah">Akidah</option><option value="Alquran Hadits">Alquran Hadits</option>
+                    <option value="Bahasa Arab">Bahasa Arab</option><option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                    <option value="Bahasa Inggris">Bahasa Inggris</option><option value="Biologi">Biologi</option>
+                    <option value="Fisika">Fisika</option><option value="Ekonomi">Ekonomi</option>
+                    <option value="Fikih">Fikih</option><option value="Geografi">Geografi</option>
+                    <option value="Sejarah">Sejarah</option><option value="Informatika">Informatika</option>
+                    <option value="Kimia">Kimia</option><option value="Matematika">Matematika</option>
+                    <option value="PJOK">PJOK</option><option value="PPKn">PPKn</option>
+                    <option value="Seni Budaya">Seni Budaya</option><option value="SKI">SKI</option>
+                    <option value="Sosiologi">Sosiologi</option>
+                </select>
+                <select id="filter-status" onchange="renderHistory()" class="form-input py-2 text-xs">
+                    <option value="">Status</option>
+                    <option value="Hadir">Hadir</option>
+                    <option value="Terlambat">Terlambat</option>
+                    <option value="Sakit">Sakit</option>
+                    <option value="Izin">Izin</option>
+                    <option value="Alpha">Alpha</option>
+                </select>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end mt-2 lg:mt-0">
+                <button onclick="checkMissingHistory()" class="flex-1 sm:flex-none text-center bg-gradient-to-r from-amber-400 to-orange-500 hover:scale-105 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-black shadow-md transition-all">Cek Absen</button>
+                <button onclick="exportToCSV()" class="flex-1 sm:flex-none text-center bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-2 rounded-xl text-xs font-extrabold border border-emerald-200 transition-colors">Export CSV</button>
+                <button onclick="clearHistoryWithPin()" class="flex-1 sm:flex-none text-center bg-rose-500 text-white hover:bg-rose-600 px-3 py-2 rounded-xl text-xs font-extrabold transition-colors">Hapus Rekap</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>
+            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Hadir</div>
+            <div id="count-hadir" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
+        </div>
+        <div class="bg-gradient-to-br from-yellow-500 to-amber-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg></div>
+            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Terlambat</div>
+            <div id="count-terlambat" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
+        </div>
+        <div class="bg-gradient-to-br from-amber-400 to-orange-500 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg></div>
+            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Sakit</div>
+            <div id="count-sakit" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
+        </div>
+        <div class="bg-gradient-to-br from-slate-400 to-slate-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg></div>
+            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Izin</div>
+            <div id="count-izin" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
+        </div>
+        <div class="bg-gradient-to-br from-rose-500 to-pink-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"></path></svg></div>
+            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Alpha</div>
+            <div id="count-alpha" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
+        </div>
+    </div>
+
+    <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white/80 shadow-sm">
+        <div class="overflow-x-auto table-scroll w-full">
+            <table class="min-w-full text-left border-collapse text-xs font-semibold">
+                <thead class="bg-slate-800 text-white uppercase text-[11px] font-black tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3 whitespace-nowrap">Waktu</th>
+                        <th class="px-4 py-3 whitespace-nowrap">NIS</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Nama Siswa</th>
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Kelas</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Mapel</th>
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Jam</th> 
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Status</th> 
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Personal WA</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body" class="divide-y divide-slate-100/80 text-slate-700"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
