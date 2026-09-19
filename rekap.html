@@ -1,104 +1,184 @@
-<!-- log_rekap.html -->
-<div class="glass-card p-4 md:p-8">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rekap Log Presensi - MAS MIFTAHUL ULUM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #94a3b8 75%, #e2e8f0 100%); background-attachment: fixed; }
+        .glass-header { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(25px); border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border-radius: 1.5rem; }
+        .form-input { width: 100%; padding: 0.5rem 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 600; }
+        .nav-active { @apply px-5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-blue-600 to-slate-500 rounded-xl shadow-md transition-all; }
+        .nav-inactive { @apply px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-white/60 rounded-xl transition-all; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <div class="flex-grow flex flex-col pt-4">
+        <header class="glass-header sticky top-4 z-50 mx-4 sm:mx-8 rounded-3xl mb-6 p-4">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="text-center sm:text-left flex-1">
+                    <h1 class="font-black text-xl lg:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-slate-500">DATABASE & LOG SERVER</h1>
+                </div>
+                <nav class="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl border overflow-x-auto whitespace-nowrap">
+                    <!-- Tautan kembali ke home.html -->
+                    <a href="home.html" class="nav-inactive block">Scanner KBM</a>
+                    <a href="home.html?tab=students" class="nav-inactive block">Data Siswa</a>
                     
-    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 border-b border-slate-200/60 pb-5 gap-4">
-        <div>
-            <h2 class="text-base md:text-xl font-black text-slate-800 uppercase tracking-tight">Master Log Presensi</h2>
-            <div class="flex items-center gap-2 mt-3 bg-slate-50/80 p-2 rounded-xl border border-slate-200 shadow-inner w-max max-w-full overflow-hidden">
-                <label class="text-[10px] md:text-[11px] font-bold text-slate-500 px-2 uppercase tracking-wide whitespace-nowrap">Sumber Data:</label>
-                <select id="data-source-mode" onchange="changeDataSource()" class="form-input text-xs w-auto py-1.5 px-2 md:px-3 border-slate-300 bg-white">
-                    <option value="local">Mode Offline (Lokal)</option>
-                    <option value="realtime">Mode Realtime (Spreadsheet)</option>
-                </select>
-                <span id="data-source-status" class="text-[9px] md:text-[10px] font-bold px-2 py-1 rounded bg-slate-200 text-slate-600 whitespace-nowrap">Lokal</span>
+                    <button onclick="switchTab('history')" id="tab-history" class="nav-active">Rekap Log</button>
+                    <button onclick="switchTab('teachers')" id="tab-teachers" class="nav-inactive text-slate-600 shadow-none bg-transparent">Daftar Guru</button>
+                    <button onclick="logout()" class="nav-inactive text-rose-500 font-bold block">Logout</button>
+                </nav>
             </div>
-        </div>
-        
-        <div class="flex flex-col lg:flex-row gap-4 w-full xl:w-auto justify-end items-center">
-            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 w-full lg:w-auto">
-                <input type="date" id="filter-date" onchange="renderHistory()" class="form-input py-2 text-xs">
-                <input type="month" id="filter-month" onchange="renderHistory()" class="form-input py-2 text-xs">
-                <input type="text" id="filter-name" onkeyup="renderHistory()" placeholder="Cari Nama..." class="form-input py-2 text-xs">
-                <select id="filter-class" onchange="renderHistory()" class="form-input py-2 text-xs">
-                    <option value="">Semua Kelas</option>
-                    <option value="X - A">X - A</option><option value="X - B">X - B</option>
-                    <option value="XI - A">XI - A</option><option value="XII - A">XII - A</option><option value="XII - B">XII - B</option>
-                </select>
-                <select id="filter-subject" onchange="renderHistory()" class="form-input py-2 text-xs">
-                    <option value="">Semua Mapel</option>
-                    <option value="Akidah">Akidah</option><option value="Alquran Hadits">Alquran Hadits</option>
-                    <option value="Bahasa Arab">Bahasa Arab</option><option value="Bahasa Indonesia">Bahasa Indonesia</option>
-                    <option value="Bahasa Inggris">Bahasa Inggris</option><option value="Biologi">Biologi</option>
-                    <option value="Fisika">Fisika</option><option value="Ekonomi">Ekonomi</option>
-                    <option value="Fikih">Fikih</option><option value="Geografi">Geografi</option>
-                    <option value="Sejarah">Sejarah</option><option value="Informatika">Informatika</option>
-                    <option value="Kimia">Kimia</option><option value="Matematika">Matematika</option>
-                    <option value="PJOK">PJOK</option><option value="PPKn">PPKn</option>
-                    <option value="Seni Budaya">Seni Budaya</option><option value="SKI">SKI</option>
-                    <option value="Sosiologi">Sosiologi</option>
-                </select>
-                <select id="filter-status" onchange="renderHistory()" class="form-input py-2 text-xs">
-                    <option value="">Status</option>
-                    <option value="Hadir">Hadir</option>
-                    <option value="Terlambat">Terlambat</option>
-                    <option value="Sakit">Sakit</option>
-                    <option value="Izin">Izin</option>
-                    <option value="Alpha">Alpha</option>
-                </select>
+        </header>
+
+        <main class="w-full max-w-7xl mx-auto px-4 pb-8 flex-grow">
+            <!-- VIEW HISTORY -->
+            <div id="view-history" class="space-y-6 block">
+                <div class="glass-card p-6">
+                    <div class="flex flex-col md:flex-row justify-between border-b pb-4 mb-4 gap-4">
+                        <h2 class="text-lg font-black text-slate-800 uppercase">Master Log Presensi</h2>
+                        <div class="flex gap-2">
+                            <button onclick="exportToCSV()" class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl text-xs font-bold">Export CSV</button>
+                            <button onclick="clearHistoryWithPin()" class="bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold">Hapus Rekap</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        <input type="date" id="filter-date" onchange="renderHistory()" class="form-input">
+                        <input type="text" id="filter-name" onkeyup="renderHistory()" placeholder="Cari Nama..." class="form-input">
+                        <select id="filter-class" onchange="renderHistory()" class="form-input"><option value="">Semua Kelas</option><option value="X - A">X - A</option><option value="XII - A">XII - A</option></select>
+                        <select id="filter-status" onchange="renderHistory()" class="form-input"><option value="">Semua Status</option><option value="Hadir">Hadir</option><option value="Alpha">Alpha</option></select>
+                    </div>
+                    
+                    <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+                        <table class="min-w-full text-left text-xs font-semibold">
+                            <thead class="bg-slate-800 text-white">
+                                <tr>
+                                    <th class="px-4 py-3">Tanggal/Waktu</th><th class="px-4 py-3">NIS</th><th class="px-4 py-3">Nama</th>
+                                    <th class="px-4 py-3">Kelas</th><th class="px-4 py-3">Mapel</th><th class="px-4 py-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end mt-2 lg:mt-0">
-                <button onclick="checkMissingHistory()" class="flex-1 sm:flex-none text-center bg-gradient-to-r from-amber-400 to-orange-500 hover:scale-105 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-black shadow-md transition-all">Cek Absen</button>
-                <button onclick="exportToCSV()" class="flex-1 sm:flex-none text-center bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-2 rounded-xl text-xs font-extrabold border border-emerald-200 transition-colors">Export CSV</button>
-                <button onclick="clearHistoryWithPin()" class="flex-1 sm:flex-none text-center bg-rose-500 text-white hover:bg-rose-600 px-3 py-2 rounded-xl text-xs font-extrabold transition-colors">Hapus Rekap</button>
+
+            <!-- VIEW TEACHERS -->
+            <div id="view-teachers" class="hidden space-y-6">
+                <div class="glass-card p-6">
+                    <h2 class="text-xl font-black text-center text-slate-800 uppercase mb-8">Daftar Tenaga Pendidik</h2>
+                    <div id="teachers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
-        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>
-            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Hadir</div>
-            <div id="count-hadir" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
-        </div>
-        <div class="bg-gradient-to-br from-yellow-500 to-amber-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg></div>
-            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Terlambat</div>
-            <div id="count-terlambat" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
-        </div>
-        <div class="bg-gradient-to-br from-amber-400 to-orange-500 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg></div>
-            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Sakit</div>
-            <div id="count-sakit" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
-        </div>
-        <div class="bg-gradient-to-br from-slate-400 to-slate-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg></div>
-            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Izin</div>
-            <div id="count-izin" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
-        </div>
-        <div class="bg-gradient-to-br from-rose-500 to-pink-600 p-4 md:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 opacity-20"><svg class="w-16 h-16 md:w-20 md:h-20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"></path></svg></div>
-            <div class="text-[10px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-90">Alpha</div>
-            <div id="count-alpha" class="text-2xl sm:text-3xl md:text-4xl font-black">0</div>
-        </div>
+        </main>
     </div>
 
-    <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white/80 shadow-sm">
-        <div class="overflow-x-auto table-scroll w-full">
-            <table class="min-w-full text-left border-collapse text-xs font-semibold">
-                <thead class="bg-slate-800 text-white uppercase text-[11px] font-black tracking-wider">
-                    <tr>
-                        <th class="px-4 py-3 whitespace-nowrap">Waktu</th>
-                        <th class="px-4 py-3 whitespace-nowrap">NIS</th>
-                        <th class="px-4 py-3 whitespace-nowrap">Nama Siswa</th>
-                        <th class="px-4 py-3 text-center whitespace-nowrap">Kelas</th>
-                        <th class="px-4 py-3 whitespace-nowrap">Mapel</th>
-                        <th class="px-4 py-3 text-center whitespace-nowrap">Jam</th> 
-                        <th class="px-4 py-3 text-center whitespace-nowrap">Status</th> 
-                        <th class="px-4 py-3 text-center whitespace-nowrap">Personal WA</th>
-                    </tr>
-                </thead>
-                <tbody id="history-table-body" class="divide-y divide-slate-100/80 text-slate-700"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <script>
+        if(!sessionStorage.getItem('auth_token')) window.location.href = 'index.html';
+        
+        let attendanceHistory = JSON.parse(localStorage.getItem('db_history') || '[]');
+        
+        function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+
+        // --- Tab Logic ---
+        function switchTab(tab) {
+            if (tab === 'teachers') {
+                document.getElementById('view-history').classList.add('hidden');
+                document.getElementById('view-teachers').classList.remove('hidden');
+                document.getElementById('tab-history').className = 'nav-inactive';
+                document.getElementById('tab-teachers').className = 'nav-active';
+                renderTeachers();
+            } else {
+                document.getElementById('view-teachers').classList.add('hidden');
+                document.getElementById('view-history').classList.remove('hidden');
+                document.getElementById('tab-teachers').className = 'nav-inactive bg-transparent';
+                document.getElementById('tab-history').className = 'nav-active';
+            }
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('tab') === 'teachers') switchTab('teachers');
+
+        // --- History Logic ---
+        function renderHistory() {
+            const filterDate = document.getElementById('filter-date').value;
+            const filterName = document.getElementById('filter-name').value.toLowerCase();
+            const filterClass = document.getElementById('filter-class').value;
+            const filterStatus = document.getElementById('filter-status').value;
+
+            const filtered = attendanceHistory.filter(log => {
+                const logDate = log.timestamp.split('T')[0];
+                if(filterDate && logDate !== filterDate) return false;
+                if(filterName && !log.name.toLowerCase().includes(filterName)) return false;
+                if(filterClass && log.className !== filterClass) return false;
+                if(filterStatus && log.status !== filterStatus) return false;
+                return true;
+            });
+
+            const tbody = document.getElementById('history-table-body');
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">Tidak ada data rekap presensi.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(log => {
+                const dt = new Date(log.timestamp);
+                const color = log.status === 'Hadir' ? 'text-emerald-600' : 'text-rose-600';
+                return `<tr>
+                    <td class="px-4 py-2">${dt.toLocaleDateString('id-ID')} ${log.timeDisplay || dt.toLocaleTimeString('id-ID')}</td>
+                    <td class="px-4 py-2">${log.nis}</td>
+                    <td class="px-4 py-2 font-bold">${log.name}</td>
+                    <td class="px-4 py-2">${log.className}</td>
+                    <td class="px-4 py-2">${log.subject}</td>
+                    <td class="px-4 py-2 text-center font-bold ${color}">${log.status}</td>
+                </tr>`;
+            }).join('');
+        }
+        
+        renderHistory();
+
+        // KODE PELENGKAP LOG & EKSEKUSI
+        function exportToCSV() {
+            if(attendanceHistory.length === 0) return alert("Tidak ada data untuk diekspor!");
+            let csv = "Tanggal,Waktu,NIS,Nama,Kelas,Mapel,Jam,Status\n";
+            attendanceHistory.forEach(r => {
+                const dt = r.timestamp.split('T')[0];
+                const time = r.timeDisplay || r.timestamp.split('T')[1].substring(0,8);
+                csv += `${dt},${time},${r.nis},"${r.name}",${r.className},${r.subject},${r.jam},${r.status}\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
+            link.setAttribute("download", `Rekap_Presensi_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearHistoryWithPin() {
+            const pin = prompt("PERINGATAN! Masukkan PIN (12345) untuk menghapus seluruh Rekap Presensi Lokal:");
+            if (pin === "12345") {
+                attendanceHistory = [];
+                localStorage.setItem('db_history', JSON.stringify(attendanceHistory));
+                renderHistory();
+                alert("Seluruh data Rekap telah terhapus!");
+            } else if (pin !== null) {
+                alert("PIN Otentikasi Salah!");
+            }
+        }
+
+        function renderTeachers() {
+            const teachers = ["Alimil Khoir, S.Pd", "Siti Ulfiyah, S.Pd", "Alfin Nur Hidayatullah, S.Pd", "Khoiriyah, S.Pd"];
+            const grid = document.getElementById('teachers-grid');
+            grid.innerHTML = teachers.map((t, idx) => `
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 text-center">
+                    <div class="bg-blue-600 text-white font-black text-[10px] tracking-widest rounded mb-2 py-1">GURU NO. ${idx + 1}</div>
+                    <h3 class="font-extrabold text-sm text-slate-800">${t}</h3>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
